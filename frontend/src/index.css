@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.1), transparent 28%),
+    #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.section-title {
+  @apply font-display text-lg font-semibold tracking-tight text-slate-900;
+}
+
+.font-jetbrains {
+  font-family: "JetBrains Mono", "Fira Code", "SFMono-Regular", Consolas, monospace;
+}
