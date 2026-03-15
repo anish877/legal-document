@@ -17,11 +17,13 @@ allowed_origins = [
     for origin in os.getenv("ALLOWED_ORIGINS", "*").split(",")
     if origin.strip()
 ]
+cors_origins = allowed_origins or ["*"]
+allow_credentials = bool(allowed_origins) and cors_origins != ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins or ["*"],
-    allow_credentials=False if allowed_origins == ["*"] else True,
+    allow_origins=cors_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

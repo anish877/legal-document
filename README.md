@@ -82,36 +82,18 @@ http://127.0.0.1:8000/docs
 ### Recommended setup
 
 - Deploy the frontend on Vercel from the `frontend/` directory.
-- Deploy the FastAPI backend as a Docker service from the repo root.
+- Deploy the FastAPI backend as a Docker service on Render or Railway from the repo root.
 - Point the frontend to the backend with `VITE_API_BASE_URL`.
 
-### Deployment profiles
+### Backend deploy
 
-This repo now supports two backend profiles:
+This repo includes a production Dockerfile that installs:
 
-- `lite`: smaller image, no transformer models, no OCR dependency, better for free or low-memory hosting
-- `full`: original ML-heavy pipeline with transformer summarization, semantic similarity, and OCR
+- Python dependencies from `requirements.txt`
+- `tesseract-ocr` for scanned PDF OCR
+- the spaCy model `en_core_web_sm`
 
-The root [Dockerfile](/Users/anishsuman/legal-document-summarizer/Dockerfile) uses `lite` mode by default. The paid/high-memory version is available in [Dockerfile.full](/Users/anishsuman/legal-document-summarizer/Dockerfile.full).
-
-### Lite backend deploy
-
-This is the best default for free hosting because it avoids:
-
-- `torch`
-- `transformers`
-- Tesseract system packages
-- large model downloads during boot
-
-The lite mode still keeps:
-
-- document upload
-- PDF and text parsing
-- rule-based summarization fallback
-- regex and spaCy-based entity extraction
-- clause detection, verdict detection, and risk analysis
-
-For Render, Railway, or Hugging Face Docker Spaces:
+For Render:
 
 1. Create a new Web Service from this repo.
 2. Choose `Docker` as the runtime.
@@ -130,10 +112,6 @@ https://your-backend-domain.onrender.com/health
 https://your-backend-domain.onrender.com/docs
 ```
 
-### Full backend deploy
-
-Use [Dockerfile.full](/Users/anishsuman/legal-document-summarizer/Dockerfile.full) only on higher-memory infrastructure. It keeps OCR and transformer-backed analysis, but it is not a good fit for free tiers.
-
 ### Frontend deploy
 
 In Vercel, set:
@@ -147,5 +125,5 @@ Then redeploy the frontend so the built app uses the backend URL.
 ### Production notes
 
 - Wildcard CORS is only used when `ALLOWED_ORIGINS` is not set.
-- `lite` mode changes output quality slightly because it relies on heuristic summarization and lexical similarity.
-- `full` mode preserves the richer transformer-backed output, but needs substantially more RAM.
+- OCR requires Tesseract, so a plain serverless Python function is not a good fit here.
+- The first requests may be slower while model assets warm up or download.

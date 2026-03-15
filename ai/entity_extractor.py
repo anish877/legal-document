@@ -3,14 +3,7 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 
-from backend.utils.runtime import ENABLE_TRANSFORMERS
-
-try:
-    from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
-except ImportError:  # pragma: no cover - exercised in lite deployments
-    AutoModelForTokenClassification = None
-    AutoTokenizer = None
-    pipeline = None
+from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
 
 
 MAX_NER_CHARS = 16000
@@ -176,8 +169,6 @@ class LegalEntityExtractor:
     def _get_ner_components(self):
         global NER_PIPELINE, NER_TOKENIZER, NER_LOAD_FAILED
 
-        if not ENABLE_TRANSFORMERS or AutoModelForTokenClassification is None or AutoTokenizer is None or pipeline is None:
-            return None, None
         if NER_LOAD_FAILED:
             return None, None
         if NER_PIPELINE is not None and NER_TOKENIZER is not None:

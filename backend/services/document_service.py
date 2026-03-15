@@ -4,14 +4,8 @@ from io import BytesIO
 from pathlib import Path
 
 import fitz
+import pytesseract
 from PIL import Image
-
-from backend.utils.runtime import ENABLE_OCR
-
-try:
-    import pytesseract
-except ImportError:  # pragma: no cover - exercised in lite deployments
-    pytesseract = None
 
 
 class DocumentService:
@@ -46,7 +40,7 @@ class DocumentService:
 
         scanned_pdf = len(page_texts) > 0 and low_text_pages / len(page_texts) >= 0.5
 
-        if scanned_pdf and ENABLE_OCR and pytesseract is not None:
+        if scanned_pdf:
             page_texts = [self._ocr_page(page) for page in pdf]
 
         return {

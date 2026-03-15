@@ -4,32 +4,11 @@ import logging
 import re
 from functools import lru_cache
 
+import numpy as np
 import spacy
-
-from backend.utils.runtime import ENABLE_TRANSFORMERS
-
-try:
-    import numpy as np
-except ImportError:  # pragma: no cover - exercised in lite deployments
-    np = None
-
-try:
-    import torch
-except ImportError:  # pragma: no cover - exercised in lite deployments
-    torch = None
-
-try:
-    from sklearn.metrics.pairwise import cosine_similarity
-except ImportError:  # pragma: no cover - exercised in lite deployments
-    cosine_similarity = None
-
-try:
-    from transformers import AutoModel, AutoModelForTokenClassification, AutoTokenizer, pipeline
-except ImportError:  # pragma: no cover - exercised in lite deployments
-    AutoModel = None
-    AutoModelForTokenClassification = None
-    AutoTokenizer = None
-    pipeline = None
+import torch
+from sklearn.metrics.pairwise import cosine_similarity
+from transformers import AutoModel, AutoModelForTokenClassification, AutoTokenizer, pipeline
 
 
 logger = logging.getLogger(__name__)
@@ -55,8 +34,6 @@ class NLPService:
         return self._spacy_model
 
     def get_summarizer(self):
-        if not ENABLE_TRANSFORMERS or pipeline is None:
-            return None
         if self._summarizer is None:
             self._summarizer = pipeline(
                 "summarization",
@@ -67,8 +44,6 @@ class NLPService:
         return self._summarizer
 
     def get_legal_bert(self):
-        if not ENABLE_TRANSFORMERS or AutoTokenizer is None or AutoModel is None:
-            return None, None
         if self._legal_tokenizer is None or self._legal_model is None:
             self._legal_tokenizer = AutoTokenizer.from_pretrained("nlpaueb/legal-bert-base-uncased")
             self._legal_model = AutoModel.from_pretrained("nlpaueb/legal-bert-base-uncased")
@@ -76,8 +51,6 @@ class NLPService:
         return self._legal_tokenizer, self._legal_model
 
     def get_ner_pipeline(self):
-        if not ENABLE_TRANSFORMERS or AutoTokenizer is None or AutoModelForTokenClassification is None or pipeline is None:
-            return None
         if self._ner_pipeline is None:
             tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
             model = AutoModelForTokenClassification.from_pretrained("dslim/bert-base-NER")
@@ -90,19 +63,8 @@ class NLPService:
         return self._ner_pipeline
 
     @lru_cache(maxsize=32)
-    def embed_text(self, text: str):
-        if (
-            not ENABLE_TRANSFORMERS
-            or np is None
-            or torch is None
-            or cosine_similarity is None
-            or AutoTokenizer is None
-            or AutoModel is None
-        ):
-            raise RuntimeError("Transformer embeddings are disabled.")
+    def embed_text(self, text: str) -> np.ndarray:
         tokenizer, model = self.get_legal_bert()
-        if tokenizer is None or model is None:
-            raise RuntimeError("Transformer embeddings are unavailable.")
         inputs = tokenizer(
             text[:4096],
             return_tensors="pt",
@@ -118,8 +80,6 @@ class NLPService:
     def safe_ner(self, text: str) -> list[dict]:
         try:
             ner = self.get_ner_pipeline()
-            if ner is None:
-                raise RuntimeError("Transformer NER is disabled.")
             return ner(text[:4000])
         except Exception as exc:
             logger.warning("Falling back to spaCy entities: %s", exc)
@@ -148,8 +108,6 @@ class NLPService:
             return text.strip()
         try:
             summarizer = self.get_summarizer()
-            if summarizer is None:
-                raise RuntimeError("Transformer summarizer is disabled.")
             result = summarizer(
                 text,
                 max_length=max_length,
