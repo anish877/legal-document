@@ -5,7 +5,13 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 
-from transformers import AutoTokenizer, pipeline
+from backend.utils.runtime import ENABLE_TRANSFORMERS
+
+try:
+    from transformers import AutoTokenizer, pipeline
+except ImportError:  # pragma: no cover - exercised in lite deployments
+    AutoTokenizer = None
+    pipeline = None
 
 
 MAX_INITIAL_CHARS = 16000
@@ -21,6 +27,8 @@ BART_TOKENIZER = None
 
 def get_summarizer():
     global SUMMARIZER
+    if not ENABLE_TRANSFORMERS or pipeline is None:
+        return None
     if SUMMARIZER is None:
         SUMMARIZER = pipeline(
             "summarization",
@@ -33,6 +41,8 @@ def get_summarizer():
 
 def get_bart_tokenizer():
     global BART_TOKENIZER
+    if not ENABLE_TRANSFORMERS or AutoTokenizer is None:
+        return None
     if BART_TOKENIZER is None:
         BART_TOKENIZER = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
     return BART_TOKENIZER
@@ -162,7 +172,11 @@ class LegalDocumentSummarizer:
         return chunks or [cleaned]
 
     def summarize_chunk(self, chunk: str, max_length: int = SUMMARY_MAX_LENGTH, min_length: int = SUMMARY_MIN_LENGTH) -> str:
-        result = get_summarizer()(
+        summarizer = get_summarizer()
+        if summarizer is None:
+            return self._fallback_summary(chunk)
+
+        result = summarizer(
             chunk,
             max_length=max_length,
             min_length=min_length,
@@ -350,7 +364,10 @@ class LegalDocumentSummarizer:
         return risks[:5]
 
     def _token_count(self, text: str) -> int:
-        return len(get_bart_tokenizer().encode(text, add_special_tokens=False))
+        tokenizer = get_bart_tokenizer()
+        if tokenizer is None:
+            return len(text.split())
+        return len(tokenizer.encode(text, add_special_tokens=False))
 
     def _normalize_phrase(self, value: str) -> str:
         cleaned = re.sub(r"\s+", " ", str(value)).strip(" .,:;-")
