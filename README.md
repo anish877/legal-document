@@ -76,3 +76,54 @@ http://127.0.0.1:8000/docs
 
 - The first request that uses BART or Legal-BERT may download model weights from Hugging Face.
 - If model downloads are unavailable, the service falls back to heuristic outputs where possible.
+
+## Deployment
+
+### Recommended setup
+
+- Deploy the frontend on Vercel from the `frontend/` directory.
+- Deploy the FastAPI backend as a Docker service on Render or Railway from the repo root.
+- Point the frontend to the backend with `VITE_API_BASE_URL`.
+
+### Backend deploy
+
+This repo includes a production Dockerfile that installs:
+
+- Python dependencies from `requirements.txt`
+- `tesseract-ocr` for scanned PDF OCR
+- the spaCy model `en_core_web_sm`
+
+For Render:
+
+1. Create a new Web Service from this repo.
+2. Choose `Docker` as the runtime.
+3. Use the repo root as the service root.
+4. Set these environment variables:
+
+```text
+PORT=8000
+ALLOWED_ORIGINS=https://your-frontend-domain.vercel.app
+```
+
+5. Deploy and verify:
+
+```text
+https://your-backend-domain.onrender.com/health
+https://your-backend-domain.onrender.com/docs
+```
+
+### Frontend deploy
+
+In Vercel, set:
+
+```text
+VITE_API_BASE_URL=https://your-backend-domain.onrender.com
+```
+
+Then redeploy the frontend so the built app uses the backend URL.
+
+### Production notes
+
+- Wildcard CORS is only used when `ALLOWED_ORIGINS` is not set.
+- OCR requires Tesseract, so a plain serverless Python function is not a good fit here.
+- The first requests may be slower while model assets warm up or download.

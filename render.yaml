@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: legal-document-summarizer-api
+    runtime: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /health
