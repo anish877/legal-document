@@ -49,7 +49,7 @@ class AnalysisService:
             verdict=analysis.verdict,
             risks=[RiskItem(**risk) for risk in analysis.risks],
             metadata=DocumentMetadata(
-                filename=file.filename or "uploaded_document",
+                filename=filename or "uploaded_document",
                 file_type=parsed["file_type"],
                 pages=parsed["pages"],
                 scanned_pdf=parsed["scanned_pdf"],
