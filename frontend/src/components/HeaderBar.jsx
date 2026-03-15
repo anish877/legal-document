@@ -1,27 +1,36 @@
 function StatPill({ value }) {
   return (
-    <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur">
+    <span className="rounded-full border border-[var(--surface-stroke)] bg-white/85 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
       {value}
     </span>
   );
 }
 
-export default function HeaderBar({ file, metadata, onFileSelect, onAnalyze, busy }) {
+function stateLabel(connectionState) {
+  if (connectionState === "streaming") return "SSE live";
+  if (connectionState === "connecting") return "Connecting";
+  if (connectionState === "error") return "Stream issue";
+  if (connectionState === "closed") return "Completed";
+  return "Idle";
+}
+
+export default function HeaderBar({ file, metadata, metrics, jobId, connectionState, onFileSelect, onAnalyze, busy }) {
   const stats = [
     metadata?.pages ? `${metadata.pages} pages` : "Pages pending",
     metadata?.text_length ? `${metadata.text_length.toLocaleString()} chars` : "Words pending",
     metadata?.chunk_count ? `${metadata.chunk_count} chunks` : "Chunks pending",
+    metrics?.durations?.summarize ? `${metrics.durations.summarize.toFixed(2)}s summary` : stateLabel(connectionState),
   ];
 
   return (
-    <header className="rounded-[28px] border border-slate-200/80 bg-white/90 px-6 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur">
+    <header className="rounded-[32px] border border-[var(--surface-stroke)] bg-[var(--surface)] px-6 py-6 shadow-[0_24px_70px_rgba(15,23,42,0.10)] backdrop-blur">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-blue-600">AI Workspace</p>
-          <h1 className="mt-2 font-display text-3xl text-slate-950 md:text-4xl">Legal AI Analyzer</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-            Review dense legal documents in a cleaner workspace with AI summaries, inferred key facts, and
-            guided reading.
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--brand-strong)]">Live Analysis Workspace</p>
+          <h1 className="mt-2 font-display text-3xl text-slate-950 md:text-5xl">Legal AI Analyzer</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+            Upload a contract, petition, or judgment and watch the backend move through extraction, clause checks,
+            risk scoring, and summary generation in real time.
           </p>
         </div>
 
@@ -47,10 +56,15 @@ export default function HeaderBar({ file, metadata, onFileSelect, onAnalyze, bus
               type="button"
               disabled={!file || busy}
               onClick={onAnalyze}
-              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--brand-strong)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--brand)] hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              {busy ? "Analyzing..." : "Analyze"}
+              {busy ? "Streaming Analysis..." : "Start Live Analysis"}
             </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <span className="rounded-full bg-slate-950 px-3 py-1.5 text-white">{stateLabel(connectionState)}</span>
+            {jobId ? <span className="rounded-full bg-white px-3 py-1.5 shadow-sm">Job {jobId.slice(0, 8)}</span> : null}
           </div>
         </div>
       </div>

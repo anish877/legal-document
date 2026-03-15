@@ -18,9 +18,9 @@ export default function SummaryCard({ summary, detailedSummary }) {
           <span className="group-open:hidden">Detailed Summary</span>
           <span className="hidden group-open:inline">Hide Detailed Summary</span>
         </summary>
-        <p className="mt-3 text-sm leading-7 text-slate-700">
+        <pre className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">
           {detailedSummary || "A longer AI-generated summary will appear here after analysis completes."}
-        </p>
+        </pre>
       </details>
     </section>
   );

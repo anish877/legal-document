@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from ai.summarizer import legal_summarizer
+from backend.services.analysis_pipeline import analysis_pipeline
 
 
 class SummarizationService:
     def summarize_document(self, text: str) -> dict:
-        return legal_summarizer.summarize_document(text)
+        analysis = analysis_pipeline.analyze(text)
+        return {
+            "summary": analysis.summary,
+            "detailed_summary": analysis.detailed_summary,
+            "chunk_summaries": list(analysis.chunk_summaries),
+            "chunk_count": analysis.chunk_count,
+            "insights": analysis.insights,
+        }
 
 
 summarization_service = SummarizationService()

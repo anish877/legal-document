@@ -3,8 +3,14 @@
 @tailwind utilities;
 
 :root {
+  --app-bg: #f4efe3;
+  --surface: rgba(255, 252, 246, 0.84);
+  --surface-stroke: rgba(148, 163, 184, 0.24);
+  --brand: #b45309;
+  --brand-strong: #8a3f00;
+  --accent: #0f766e;
   color: #0f172a;
-  background: #f8fafc;
+  background: var(--app-bg);
 }
 
 html,
@@ -15,11 +21,12 @@ body,
 
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 30%),
-    radial-gradient(circle at top right, rgba(245, 158, 11, 0.1), transparent 28%),
-    #f8fafc;
+    radial-gradient(circle at top left, rgba(180, 83, 9, 0.12), transparent 32%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(255, 251, 235, 0.7), rgba(244, 239, 227, 0.9)),
+    var(--app-bg);
 }
 
 * {
@@ -28,6 +35,10 @@ body {
 
 .section-title {
   @apply font-display text-lg font-semibold tracking-tight text-slate-900;
+}
+
+.font-display {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
 }
 
 .font-jetbrains {

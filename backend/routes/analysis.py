@@ -1,4 +1,5 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 
 from backend.models.schemas import (
     ClauseExtractionResponse,
@@ -9,6 +10,7 @@ from backend.models.schemas import (
     RiskAnalysisResponse,
     SummaryResponse,
 )
+from backend.services.analysis_job_service import analysis_job_service
 from backend.services.analysis_service import analysis_service
 
 
@@ -23,6 +25,43 @@ async def upload_document(file: UploadFile = File(...)) -> DocumentAnalysisRespo
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to process document: {exc}") from exc
+
+
+@router.post("/analysis-jobs")
+async def create_analysis_job(file: UploadFile = File(...)) -> dict:
+    try:
+        file_bytes = await file.read()
+        return await analysis_job_service.create_job(file.filename or "uploaded_document", file_bytes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to start analysis job: {exc}") from exc
+
+
+@router.get("/analysis-jobs/{job_id}")
+async def get_analysis_job(job_id: str) -> dict:
+    try:
+        return await analysis_job_service.get_job(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Analysis job not found.") from exc
+
+
+@router.get("/analysis-jobs/{job_id}/events")
+async def stream_analysis_job(job_id: str) -> StreamingResponse:
+    try:
+        event_generator = await analysis_job_service.stream_events(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Analysis job not found.") from exc
+
+    return StreamingResponse(
+        event_generator,
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.post("/summarize", response_model=SummaryResponse)

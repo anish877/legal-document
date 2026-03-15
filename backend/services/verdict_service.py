@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from ai.clause_detector import legal_clause_detector
+from backend.services.analysis_pipeline import analysis_pipeline
 
 
 class VerdictService:
     def detect_final_verdict(self, text: str) -> str:
-        return legal_clause_detector.detect_final_verdict(text)
+        return analysis_pipeline.analyze(text).verdict
 
 
 verdict_service = VerdictService()

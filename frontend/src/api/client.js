@@ -27,6 +27,47 @@ export async function uploadDocument(file) {
   return handleResponse(response);
 }
 
+export async function startAnalysisJob(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/analysis-jobs`, {
+    method: "POST",
+    body: formData,
+  });
+
+  return handleResponse(response);
+}
+
+export function subscribeToAnalysisJob(jobId, { onEvent, onComplete, onError }) {
+  const source = new EventSource(`${API_BASE_URL}/analysis-jobs/${jobId}/events`);
+  const eventNames = ["job.queued", "job.started", "analysis.progress", "job.completed", "job.failed"];
+
+  eventNames.forEach((eventName) => {
+    source.addEventListener(eventName, (event) => {
+      const payload = JSON.parse(event.data);
+      onEvent?.({ type: eventName, payload });
+
+      if (eventName === "job.completed") {
+        onComplete?.(payload);
+        source.close();
+      }
+
+      if (eventName === "job.failed") {
+        onError?.(new Error(payload.error || "Analysis failed."));
+        source.close();
+      }
+    });
+  });
+
+  source.onerror = () => {
+    onError?.(new Error("The live analysis stream disconnected."));
+    source.close();
+  };
+
+  return source;
+}
+
 export async function summarizeText(text) {
   const response = await fetch(`${API_BASE_URL}/summarize`, {
     method: "POST",

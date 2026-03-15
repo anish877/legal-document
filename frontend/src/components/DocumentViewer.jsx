@@ -29,7 +29,15 @@ function buildHighlights(text, insights) {
   });
 }
 
-function MetadataStrip({ metadata }) {
+function MetricPill({ label, value }) {
+  return (
+    <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm">
+      {label}: {value}
+    </span>
+  );
+}
+
+function MetadataStrip({ metadata, metrics }) {
   const items = [
     metadata?.file_type ? metadata.file_type.toUpperCase() : "PDF",
     metadata?.text_length ? `${metadata.text_length.toLocaleString()} chars` : "Character count pending",
@@ -38,32 +46,28 @@ function MetadataStrip({ metadata }) {
 
   return (
     <div className="mb-4 flex flex-wrap gap-2">
-      {items.map((item) => (
-        <span
-          key={item}
-          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm"
-        >
-          {item}
-        </span>
-      ))}
+      {items.map((item) => <MetricPill key={item} label="Meta" value={item} />)}
+      {metrics?.durations?.parse ? <MetricPill label="Parse" value={`${metrics.durations.parse.toFixed(2)}s`} /> : null}
+      {metrics?.durations?.ocr ? <MetricPill label="OCR" value={`${metrics.durations.ocr.toFixed(2)}s`} /> : null}
+      {metrics?.durations?.summarize ? <MetricPill label="Summary" value={`${metrics.durations.summarize.toFixed(2)}s`} /> : null}
     </div>
   );
 }
 
-export default function DocumentViewer({ text, metadata, insights }) {
+export default function DocumentViewer({ text, metadata, insights, metrics }) {
   const segments = buildHighlights(text, insights);
 
   return (
-    <section className="h-full rounded-[28px] border border-slate-200/80 bg-white/85 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur">
+    <section className="h-full rounded-[30px] border border-[var(--surface-stroke)] bg-[var(--surface)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur">
       <div className="mb-5">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Document Viewer</p>
         <h2 className="mt-2 text-2xl font-semibold text-slate-950">Read with AI-guided context</h2>
         <p className="mt-2 text-sm leading-7 text-slate-600">
-          A larger reading surface with lightweight highlights pulled from the structured analysis.
+          Highlights are grounded in parties, money, locations, and clause themes extracted from the final result.
         </p>
       </div>
 
-      <MetadataStrip metadata={metadata} />
+      <MetadataStrip metadata={metadata} metrics={metrics} />
 
       <div className="h-[760px] overflow-y-auto rounded-[24px] border border-slate-200 bg-[#f8fafc] p-6">
         {text ? (
@@ -83,7 +87,7 @@ export default function DocumentViewer({ text, metadata, insights }) {
           </pre>
         ) : (
           <div className="flex h-full items-center justify-center text-center text-sm text-slate-500">
-            Upload a document to start the AI-assisted reading workflow.
+            Upload a document to start the live analysis workflow.
           </div>
         )}
       </div>

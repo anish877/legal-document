@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from ai.entity_extractor import legal_entity_extractor
+from backend.services.analysis_pipeline import analysis_pipeline
 
 
 class EntityService:
     def extract_entities(self, text: str) -> dict:
-        return legal_entity_extractor.extract_entities(text)
+        return analysis_pipeline.analyze(text).entities
 
 
 entity_service = EntityService()

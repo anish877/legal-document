@@ -1,22 +1,47 @@
-const STEPS = ["Uploading", "Extracting text", "Analyzing document", "Generating summary"];
+const STEPS = [
+  { key: "upload", label: "File Intake", stages: ["upload"] },
+  { key: "extract", label: "Text Extraction", stages: ["extract"] },
+  { key: "analysis", label: "Legal Analysis", stages: ["normalize", "summarize", "entities", "clauses", "verdict", "risks", "analyze"] },
+  { key: "complete", label: "Ready", stages: ["complete"] },
+];
 
-export default function ProgressIndicator({ busy, completed, currentStep = 0 }) {
+function isStepComplete(step, stage, completed) {
+  if (completed) return true;
+  if (step.key === "upload") return stage !== "idle";
+  if (step.key === "extract") return !["idle", "upload", "extract"].includes(stage);
+  if (step.key === "analysis") return ["complete", "error"].includes(stage);
+  return false;
+}
+
+function isStepCurrent(step, stage, busy, completed) {
+  if (!busy || completed) return false;
+  return step.stages.includes(stage) || (step.key === "analysis" && ["summarize", "entities", "clauses", "verdict", "risks"].includes(stage));
+}
+
+export default function ProgressIndicator({ busy, completed, progress = 0, stage = "idle", events = [] }) {
   return (
-    <section className="rounded-[24px] border border-slate-200/80 bg-white/80 p-5 shadow-sm backdrop-blur">
+    <section className="rounded-[28px] border border-[var(--surface-stroke)] bg-[var(--surface)] p-5 shadow-sm backdrop-blur">
       <div className="mb-4 flex items-center justify-between">
         <p className="section-title">Analysis Progress</p>
         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          {busy ? "In progress" : completed ? "Ready" : "Waiting"}
+          {busy ? "Streaming live" : completed ? "Ready" : "Waiting"}
         </span>
+      </div>
+
+      <div className="mb-5 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="h-full rounded-full bg-[linear-gradient(90deg,var(--brand-strong),var(--accent))] transition-all duration-500"
+          style={{ width: `${Math.max(4, Math.round(progress * 100))}%` }}
+        />
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
         {STEPS.map((step, index) => {
-          const complete = completed || (busy && index < currentStep);
-          const current = busy && index === currentStep;
+          const complete = isStepComplete(step, stage, completed);
+          const current = isStepCurrent(step, stage, busy, completed);
           return (
             <div
-              key={step}
+              key={step.key}
               className={`relative overflow-hidden rounded-2xl border px-4 py-4 transition ${
                 current
                   ? "border-blue-200 bg-blue-50 shadow-sm"
@@ -33,15 +58,15 @@ export default function ProgressIndicator({ busy, completed, currentStep = 0 }) 
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
                     complete
                       ? "bg-emerald-500 text-white"
-                      : current
+                    : current
                         ? "bg-blue-600 text-white"
                         : "bg-slate-200 text-slate-600"
                   }`}
                 >
-                  {index + 1}
+                  {complete ? "✓" : index + 1}
                 </span>
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">{step}</div>
+                  <div className="text-sm font-semibold text-slate-800">{step.label}</div>
                   <div className="text-xs text-slate-500">
                     {completed ? "Completed" : current ? "Running" : complete ? "Completed" : "Pending"}
                   </div>
@@ -53,6 +78,15 @@ export default function ProgressIndicator({ busy, completed, currentStep = 0 }) 
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        {events.slice(0, 3).map((event) => (
+          <div key={event.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{event.stage}</p>
+            <p className="mt-2 text-sm text-slate-700">{event.message}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
