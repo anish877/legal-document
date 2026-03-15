@@ -15,14 +15,27 @@ MAX_WORKERS = 4
 SUMMARY_MAX_LENGTH = 300
 SUMMARY_MIN_LENGTH = 120
 
-# Load the summarization pipeline once and reuse it across requests.
-SUMMARIZER = pipeline(
-    "summarization",
-    model="facebook/bart-large-cnn",
-    tokenizer="facebook/bart-large-cnn",
-    device=-1,
-)
-BART_TOKENIZER = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
+SUMMARIZER = None
+BART_TOKENIZER = None
+
+
+def get_summarizer():
+    global SUMMARIZER
+    if SUMMARIZER is None:
+        SUMMARIZER = pipeline(
+            "summarization",
+            model="facebook/bart-large-cnn",
+            tokenizer="facebook/bart-large-cnn",
+            device=-1,
+        )
+    return SUMMARIZER
+
+
+def get_bart_tokenizer():
+    global BART_TOKENIZER
+    if BART_TOKENIZER is None:
+        BART_TOKENIZER = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
+    return BART_TOKENIZER
 
 
 class LegalDocumentSummarizer:
@@ -149,7 +162,7 @@ class LegalDocumentSummarizer:
         return chunks or [cleaned]
 
     def summarize_chunk(self, chunk: str, max_length: int = SUMMARY_MAX_LENGTH, min_length: int = SUMMARY_MIN_LENGTH) -> str:
-        result = SUMMARIZER(
+        result = get_summarizer()(
             chunk,
             max_length=max_length,
             min_length=min_length,
@@ -337,7 +350,7 @@ class LegalDocumentSummarizer:
         return risks[:5]
 
     def _token_count(self, text: str) -> int:
-        return len(BART_TOKENIZER.encode(text, add_special_tokens=False))
+        return len(get_bart_tokenizer().encode(text, add_special_tokens=False))
 
     def _normalize_phrase(self, value: str) -> str:
         cleaned = re.sub(r"\s+", " ", str(value)).strip(" .,:;-")
